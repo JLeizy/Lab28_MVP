@@ -73,13 +73,14 @@
 
                     <!-- Список товаров -->
                     <ListView Name="ProductsListView" BorderBrush="{StaticResource LineBrush}"
+                              Foreground="{StaticResource InkBrush}"
                               SelectionMode="Single"
                               SelectionChanged="ProductsListView_SelectionChanged">
                         <ListView.View>
                             <GridView>
-                                <GridViewColumn Header="Бренд" Width="130"
+                                <GridViewColumn Header="Бренд" Width="150"
                                                 DisplayMemberBinding="{Binding Brand}"/>
-                                <GridViewColumn Header="Товар" Width="290"
+                                <GridViewColumn Header="Товар" Width="330"
                                                 DisplayMemberBinding="{Binding Name}"/>
                                 <GridViewColumn Header="Категория" Width="120"
                                                 DisplayMemberBinding="{Binding Category}"/>
@@ -190,16 +191,17 @@
                         </StackPanel>
 
                         <!-- Товары в корзине -->
-                        <ListView Name="CartListView" BorderBrush="{StaticResource LineBrush}" SelectionMode="Single">
+                        <ListView Name="CartListView" BorderBrush="{StaticResource LineBrush}" SelectionMode="Single"
+                                  Foreground="{StaticResource InkBrush}">
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn Header="Товар" Width="150"
+                                    <GridViewColumn Header="Товар" Width="140"
                                                     DisplayMemberBinding="{Binding Product.Name}"/>
-                                    <GridViewColumn Header="Размер" Width="58"
+                                    <GridViewColumn Header="Размер" Width="55"
                                                     DisplayMemberBinding="{Binding Size}"/>
-                                    <GridViewColumn Header="Шт." Width="40"
+                                    <GridViewColumn Header="Шт." Width="36"
                                                     DisplayMemberBinding="{Binding Quantity}"/>
-                                    <GridViewColumn Header="Сумма" Width="85"
+                                    <GridViewColumn Header="Сумма" Width="92"
                                                     DisplayMemberBinding="{Binding Total, StringFormat={}{0:N0} BYN}"/>
                                 </GridView>
                             </ListView.View>
