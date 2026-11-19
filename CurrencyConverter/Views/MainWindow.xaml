@@ -1,0 +1,178 @@
+﻿<Window x:Class="CurrencyConverter.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Конвертер валют по курсу НБРБ"
+        Width="600" Height="700" MinWidth="540" MinHeight="620"
+        WindowStartupLocation="CenterScreen"
+        Language="ru-RU"
+        FontFamily="Segoe UI" FontSize="14"
+        Background="#F4F5F7"
+        FocusManager.FocusedElement="{Binding ElementName=AmountTextBox}">
+
+    <Window.Resources>
+        <!-- Цвета государственного флага Республики Беларусь -->
+        <SolidColorBrush x:Key="RedBrush" Color="#C8313E"/>
+        <SolidColorBrush x:Key="GreenBrush" Color="#2E7D32"/>
+
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#DDE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="16"/>
+        </Style>
+
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#5F6B7A"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <!-- Главная кнопка "Конвертировать" -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource GreenBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#256B29"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1B5E20"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Шапка -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource RedBrush}" Padding="20,14">
+            <StackPanel>
+                <TextBlock Text="Конвертер валют" Foreground="White" FontSize="22" FontWeight="SemiBold"/>
+                <TextBlock Text="по официальному курсу Национального банка Республики Беларусь"
+                           Foreground="#FFE3E5" FontSize="12"/>
+            </StackPanel>
+        </Border>
+        <Border DockPanel.Dock="Top" Background="{StaticResource GreenBrush}" Height="6"/>
+
+        <!-- Строка состояния: дата курсов и источник -->
+        <Border DockPanel.Dock="Bottom" Background="#E9ECEF" Padding="12,6">
+            <TextBlock Name="StatusTextBlock" Foreground="#3D4752" FontSize="12" TextWrapping="Wrap"/>
+        </Border>
+
+        <Grid Margin="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Блок конвертации -->
+            <Border Grid.Row="0" Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Сумма (например 150 или 99,50)" Style="{StaticResource Caption}"/>
+                    <TextBox Name="AmountTextBox" FontSize="18" Padding="6,4"/>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Из валюты" Style="{StaticResource Caption}"/>
+                            <ComboBox Name="FromComboBox"
+                                      DisplayMemberPath="DisplayName"
+                                      SelectedValuePath="Code"
+                                      Padding="6,5"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" Name="SwapButton"
+                                Content="⇄" FontSize="16"
+                                Width="44" Margin="8,0" Padding="0,3"
+                                VerticalAlignment="Bottom"
+                                ToolTip="Поменять валюты местами"
+                                Click="SwapButton_Click"/>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="В валюту" Style="{StaticResource Caption}"/>
+                            <ComboBox Name="ToComboBox"
+                                      DisplayMemberPath="DisplayName"
+                                      SelectedValuePath="Code"
+                                      Padding="6,5"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Button Name="ConvertButton"
+                            Content="Конвертировать"
+                            Style="{StaticResource PrimaryButton}"
+                            IsDefault="True"
+                            Margin="0,14,0,0"
+                            Click="ConvertButton_Click"/>
+
+                    <!-- Результат или сообщение об ошибке -->
+                    <Border Margin="0,14,0,0" Background="#F7F9FA" CornerRadius="4" Padding="12" MinHeight="70">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Name="ResultTextBlock" FontSize="20" FontWeight="SemiBold"
+                                       TextWrapping="Wrap" Visibility="Collapsed"/>
+                            <TextBlock Name="RateTextBlock" Foreground="#5F6B7A" FontSize="12"
+                                       Margin="0,2,0,0" Visibility="Collapsed"/>
+                            <TextBlock Name="ErrorTextBlock" Foreground="{StaticResource RedBrush}"
+                                       TextWrapping="Wrap" Visibility="Collapsed"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Таблица официальных курсов -->
+            <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,12,0,0">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Button Name="RefreshButton" DockPanel.Dock="Right"
+                                Content="Обновить с сайта НБРБ"
+                                Click="RefreshButton_Click"/>
+                        <TextBlock Text="Официальные курсы" FontSize="16" FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <ListView Name="RatesListView" BorderThickness="0">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Код" Width="60"
+                                                DisplayMemberBinding="{Binding Code}"/>
+                                <GridViewColumn Header="Валюта" Width="190"
+                                                DisplayMemberBinding="{Binding Name}"/>
+                                <GridViewColumn Header="Единиц" Width="70"
+                                                DisplayMemberBinding="{Binding Scale}"/>
+                                <GridViewColumn Header="Курс, BYN" Width="100"
+                                                DisplayMemberBinding="{Binding OfficialRate, StringFormat=N4}"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>
