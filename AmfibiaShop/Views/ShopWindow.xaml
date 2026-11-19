@@ -78,9 +78,9 @@
                               SelectionChanged="ProductsListView_SelectionChanged">
                         <ListView.View>
                             <GridView>
-                                <GridViewColumn Header="Бренд" Width="150"
+                                <GridViewColumn Header="Бренд" Width="175"
                                                 DisplayMemberBinding="{Binding Brand}"/>
-                                <GridViewColumn Header="Товар" Width="330"
+                                <GridViewColumn Header="Товар" Width="305"
                                                 DisplayMemberBinding="{Binding Name}"/>
                                 <GridViewColumn Header="Категория" Width="120"
                                                 DisplayMemberBinding="{Binding Category}"/>
