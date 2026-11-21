@@ -8,12 +8,17 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>AmfibiaShop</RootNamespace>
     <AssemblyName>AmfibiaShop</AssemblyName>
+    <Product>AMFIBIA — магазин (ЛР №28, MVP)</Product>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Каталог товаров сайта AMFIBIA встраивается внутрь программы -->
-    <None Remove="Data\catalog.json" />
-    <EmbeddedResource Include="Data\catalog.json" LogicalName="catalog.json" />
+    <!-- Данные сайта AMFIBIA встраиваются внутрь программы -->
+    <None Remove="Data\amfibia.json" />
+    <EmbeddedResource Include="Data\amfibia.json" LogicalName="amfibia.json" />
+
+    <!-- Шрифты сайта (лицензия SIL OFL, тексты лицензий лежат рядом) -->
+    <None Remove="Fonts\*.ttf" />
+    <Resource Include="Fonts\*.ttf" />
   </ItemGroup>
 
 </Project>

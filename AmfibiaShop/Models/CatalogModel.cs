@@ -1,142 +1,185 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text.Json;
 
 namespace AmfibiaShop.Models;
 
-/// <summary>Порядок сортировки каталога.</summary>
+/// <summary>Сортировка каталога.</summary>
 public enum ProductSort
 {
-    Default,
+    Popular,
+    New,
     PriceAscending,
     PriceDescending,
+    Discount,
     Name
 }
 
+/// <summary>Условия поиска товаров.</summary>
+public class CatalogFilter
+{
+    public string Search { get; set; } = string.Empty;
+    public string? Group { get; set; }
+    public string? Category { get; set; }
+    public HashSet<string> Brands { get; set; } = new();
+    public string? Gender { get; set; }
+    public HashSet<string> Colors { get; set; } = new();
+    public decimal? MinPrice { get; set; }
+    public decimal? MaxPrice { get; set; }
+    public bool OnlyNew { get; set; }
+    public bool OnlySale { get; set; }
+    public bool OnlyPreowned { get; set; }
+    public bool OnlyIconic { get; set; }
+    public ProductSort Sort { get; set; } = ProductSort.Popular;
+}
+
+/// <summary>Пара «код — название» для справочников каталога.</summary>
+public record CatalogOption(string Key, string Title, int Count, string? Extra = null);
+
 /// <summary>
-/// МОДЕЛЬ каталога.
-/// Загружает товары, ищет и сортирует их, знает размерные сетки.
+/// МОДЕЛЬ каталога: поиск, фильтры, сортировка, страницы, подборки.
 /// </summary>
 public class CatalogModel
 {
-    // Разделы в том же порядке, что в меню сайта
-    private static readonly string[] GroupOrder =
+    private static readonly StringComparer Russian = StringComparer.Create(CultureInfo.GetCultureInfo("ru-RU"), true);
+    private static readonly string[] GroupOrder = { "clothing", "shoes", "bags", "accessories", "jewelry", "fragrance", "home" };
+
+    private readonly ShopData data;
+
+    public CatalogModel(ShopData data)
     {
-        "Одежда", "Обувь", "Сумки", "Аксессуары", "Ювелирные изделия", "Парфюмерия", "Для дома"
-    };
-
-    private static readonly StringComparer RussianComparer =
-        StringComparer.Create(CultureInfo.GetCultureInfo("ru-RU"), ignoreCase: true);
-
-    private readonly List<Product> products;
-
-    /// <summary>Каталог из файла catalog.json, встроенного в программу.</summary>
-    public CatalogModel()
-        : this(LoadEmbeddedCatalog())
-    {
+        this.data = data;
+        Found = data.Products;
     }
 
-    /// <summary>Каталог из готового списка товаров.</summary>
-    public CatalogModel(IEnumerable<Product> products)
-    {
-        this.products = products.ToList();
-        FoundProducts = this.products;
-    }
+    public IReadOnlyList<Product> Products => data.Products;
 
-    /// <summary>Все товары.</summary>
-    public IReadOnlyList<Product> Products => products;
+    public IReadOnlyList<Brand> Brands => data.Brands;
 
     /// <summary>Результат последнего поиска.</summary>
-    public IReadOnlyList<Product> FoundProducts { get; private set; }
+    public IReadOnlyList<Product> Found { get; private set; }
 
-    /// <summary>Бренды по алфавиту.</summary>
-    public IReadOnlyList<string> Brands =>
-        products.Select(p => p.Brand).Distinct().OrderBy(b => b, RussianComparer).ToList();
+    public Product? Find(string id) => data.FindProduct(id);
 
-    /// <summary>Разделы, в которых есть товары.</summary>
-    public IReadOnlyList<string> Groups =>
-        GroupOrder.Where(g => products.Any(p => p.Group == g)).ToList();
+    public Brand? FindBrand(string slug) => data.FindBrand(slug);
 
-    /// <summary>
-    /// Поиск товаров. null или пустая строка в фильтре означает «все».
-    /// Результат сохраняется в свойство FoundProducts.
-    /// </summary>
-    public void Search(string? brand, string? group, string? text, ProductSort sort)
+    // ----- справочники для фильтров -----
+
+    public IReadOnlyList<CatalogOption> Groups() =>
+        GroupOrder
+            .Select(slug => (slug, items: data.Products.Where(p => p.GroupSlug == slug).ToList()))
+            .Where(x => x.items.Count > 0)
+            .Select(x => new CatalogOption(x.slug, x.items[0].Group, x.items.Count))
+            .ToList();
+
+    public IReadOnlyList<CatalogOption> Categories(string? group) =>
+        data.Products
+            .Where(p => group == null || p.GroupSlug == group)
+            .GroupBy(p => (p.CategorySlug, p.Category))
+            .Select(g => new CatalogOption(g.Key.CategorySlug, g.Key.Category, g.Count()))
+            .OrderByDescending(o => o.Count)
+            .ToList();
+
+    public IReadOnlyList<CatalogOption> BrandOptions() =>
+        data.Brands
+            .Select(b => new CatalogOption(b.Slug, b.Name, data.Products.Count(p => p.BrandSlug == b.Slug)))
+            .OrderBy(o => o.Title, Russian)
+            .ToList();
+
+    public IReadOnlyList<CatalogOption> Genders() => new[]
     {
-        IEnumerable<Product> query = products;
+        new CatalogOption("women", "Женское", data.Products.Count(p => p.GenderCode == "women")),
+        new CatalogOption("men", "Мужское", data.Products.Count(p => p.GenderCode == "men")),
+        new CatalogOption("unisex", "Унисекс", data.Products.Count(p => p.GenderCode == "unisex"))
+    };
 
-        if (!string.IsNullOrEmpty(brand))
+    public IReadOnlyList<CatalogOption> Colors() =>
+        data.Products
+            .GroupBy(p => (p.ColorCode, p.Color, p.ColorHex))
+            .Select(g => new CatalogOption(g.Key.ColorCode, g.Key.Color, g.Count(), g.Key.ColorHex))
+            .OrderByDescending(o => o.Count)
+            .ToList();
+
+    public decimal MinPrice => data.Products.Min(p => p.Price);
+
+    public decimal MaxPrice => data.Products.Max(p => p.Price);
+
+    // ----- поиск -----
+
+    public IReadOnlyList<Product> Search(CatalogFilter filter)
+    {
+        IEnumerable<Product> query = data.Products;
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            query = query.Where(p => p.Brand == brand);
+            string[] words = filter.Search.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            query = query.Where(p => words.All(w =>
+                p.Name.Contains(w, StringComparison.OrdinalIgnoreCase) ||
+                p.NameEn.Contains(w, StringComparison.OrdinalIgnoreCase) ||
+                p.Brand.Contains(w, StringComparison.OrdinalIgnoreCase) ||
+                p.Category.Contains(w, StringComparison.OrdinalIgnoreCase) ||
+                p.Id.Contains(w, StringComparison.OrdinalIgnoreCase)));
         }
 
-        if (!string.IsNullOrEmpty(group))
-        {
-            query = query.Where(p => p.Group == group);
-        }
+        if (filter.Group != null) query = query.Where(p => p.GroupSlug == filter.Group);
+        if (filter.Category != null) query = query.Where(p => p.CategorySlug == filter.Category);
+        if (filter.Brands.Count > 0) query = query.Where(p => filter.Brands.Contains(p.BrandSlug));
+        if (filter.Gender != null) query = query.Where(p => p.GenderCode == filter.Gender);
+        if (filter.Colors.Count > 0) query = query.Where(p => filter.Colors.Contains(p.ColorCode));
+        if (filter.MinPrice != null) query = query.Where(p => p.Price >= filter.MinPrice);
+        if (filter.MaxPrice != null) query = query.Where(p => p.Price <= filter.MaxPrice);
+        if (filter.OnlyNew) query = query.Where(p => p.IsNew);
+        if (filter.OnlySale) query = query.Where(p => p.DiscountPercent > 0);
+        if (filter.OnlyPreowned) query = query.Where(p => p.Preowned);
+        if (filter.OnlyIconic) query = query.Where(p => p.Iconic);
 
-        if (!string.IsNullOrWhiteSpace(text))
+        query = filter.Sort switch
         {
-            string word = text.Trim();
-            query = query.Where(p =>
-                p.Name.Contains(word, StringComparison.OrdinalIgnoreCase) ||
-                p.Brand.Contains(word, StringComparison.OrdinalIgnoreCase) ||
-                p.Category.Contains(word, StringComparison.OrdinalIgnoreCase));
-        }
-
-        query = sort switch
-        {
+            ProductSort.New => query.OrderByDescending(p => p.IsNew).ThenByDescending(p => p.Views),
             ProductSort.PriceAscending => query.OrderBy(p => p.Price),
             ProductSort.PriceDescending => query.OrderByDescending(p => p.Price),
-            ProductSort.Name => query.OrderBy(p => p.Name, RussianComparer),
-            _ => query
+            ProductSort.Discount => query.OrderByDescending(p => p.DiscountPercent).ThenByDescending(p => p.Views),
+            ProductSort.Name => query.OrderBy(p => p.Name, Russian),
+            _ => query.OrderByDescending(p => p.Iconic).ThenByDescending(p => p.Views)
         };
 
-        FoundProducts = query.ToList(); // обновление модели
+        Found = query.ToList();
+        return Found;
     }
 
-    /// <summary>
-    /// Размеры товара — те же сетки, что на сайте (db/seed-data/sizes.js).
-    /// </summary>
-    public IReadOnlyList<string> GetSizes(Product product)
+    /// <summary>Номер страницы приводится к допустимому диапазону.</summary>
+    public static IReadOnlyList<Product> Page(IReadOnlyList<Product> items, int page, int pageSize, out int pageCount, out int actualPage)
     {
-        switch (product.SizeType)
-        {
-            case "clothing":
-                if (product.Gender == "Женское") return new[] { "XS", "S", "M", "L", "XL" };
-                if (product.Gender == "Мужское") return new[] { "S", "M", "L", "XL", "XXL" };
-                return new[] { "XS", "S", "M", "L", "XL", "XXL" };
-
-            case "shoes":
-                if (product.Gender == "Женское") return new[] { "35", "36", "37", "38", "39", "40", "41" };
-                if (product.Gender == "Мужское") return new[] { "39", "40", "41", "42", "43", "44", "45", "46" };
-                return new[] { "36", "37", "38", "39", "40", "41", "42", "43", "44", "45" };
-
-            case "ring":
-                return new[] { "16", "16.5", "17", "17.5", "18", "19", "20" };
-
-            case "volume_ml":
-                return new[] { "50 ml", "100 ml" };
-
-            default:
-                return new[] { "OS" }; // единый размер
-        }
+        pageCount = Math.Max(1, (int)Math.Ceiling(items.Count / (double)pageSize));
+        actualPage = Math.Clamp(page, 1, pageCount);
+        return items.Skip((actualPage - 1) * pageSize).Take(pageSize).ToList();
     }
 
-    private static List<Product> LoadEmbeddedCatalog()
-    {
-        Assembly assembly = typeof(CatalogModel).Assembly;
-        using Stream? stream = assembly.GetManifestResourceStream("catalog.json");
-        if (stream == null)
-        {
-            throw new InvalidOperationException("В программе нет файла каталога catalog.json.");
-        }
+    // ----- подборки -----
 
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        return JsonSerializer.Deserialize<List<Product>>(stream, options) ?? new List<Product>();
-    }
+    public IReadOnlyList<Product> NewArrivals(int count) =>
+        data.Products.Where(p => p.IsNew).OrderByDescending(p => p.Views).Take(count).ToList();
+
+    public IReadOnlyList<Product> IconicPieces(int count) =>
+        data.Products.Where(p => p.Iconic && !p.Preowned).OrderByDescending(p => p.Views).Take(count).ToList();
+
+    public IReadOnlyList<Product> OnSale(int count) =>
+        data.Products.Where(p => p.DiscountPercent > 0).OrderByDescending(p => p.DiscountPercent).Take(count).ToList();
+
+    public IReadOnlyList<Product> ByBrand(string slug, int count) =>
+        data.Products.Where(p => p.BrandSlug == slug).OrderByDescending(p => p.Iconic).ThenByDescending(p => p.Views).Take(count).ToList();
+
+    /// <summary>Похожие: та же подкатегория, сначала тот же бренд.</summary>
+    public IReadOnlyList<Product> Similar(Product product, int count) =>
+        data.Products
+            .Where(p => p.Id != product.Id && p.Model != product.Model && p.CategorySlug == product.CategorySlug)
+            .OrderByDescending(p => p.BrandSlug == product.BrandSlug)
+            .ThenByDescending(p => p.Views)
+            .Take(count)
+            .ToList();
+
+    /// <summary>Другие цвета той же модели (общий код модели, как на сайте).</summary>
+    public IReadOnlyList<Product> Variants(Product product) =>
+        data.Products.Where(p => p.Model == product.Model && p.BrandSlug == product.BrandSlug).ToList();
 }

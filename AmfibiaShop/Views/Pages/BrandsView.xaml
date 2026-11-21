@@ -1,0 +1,12 @@
+﻿<UserControl x:Class="AmfibiaShop.Views.Pages.BrandsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="44,30,30,48">
+            <TextBlock Text="ОТ 1837 ДО 2014 ГОДА" Style="{StaticResource T.Eyebrow}"/>
+            <TextBlock Text="Модные дома" Style="{StaticResource T.H1}" Margin="0,6,0,4"/>
+            <TextBlock x:Name="CountText" Style="{StaticResource T.Muted}" Margin="0,0,0,28"/>
+            <ItemsControl x:Name="BrandItems" ItemsPanel="{StaticResource Grid3}" ItemTemplate="{StaticResource BrandTile}"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

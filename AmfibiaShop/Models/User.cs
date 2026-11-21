@@ -1,34 +1,31 @@
-﻿namespace AmfibiaShop.Models;
+﻿using System;
 
-/// <summary>
-/// Пользователь магазина (как класс User в методичке).
-/// Данные — тестовые аккаунты сайта AMFIBIA.
-/// </summary>
+namespace AmfibiaShop.Models;
+
+/// <summary>Пользователь магазина (как класс User в методичке, но с данными сайта).</summary>
 public class User
 {
-    public User(string firstName, string lastName, string email, string password, string role, bool isBlocked = false)
-    {
-        FirstName = firstName;
-        LastName = lastName;
-        Email = email;
-        Password = password;
-        Role = role;
-        IsBlocked = isBlocked;
-    }
+    public string Email { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string Role { get; set; } = "buyer";
+    public string RoleName { get; set; } = "Покупатель";
+    public string Phone { get; set; } = string.Empty;
+    public string Country { get; set; } = "BY";
+    public string City { get; set; } = string.Empty;
+    public string Street { get; set; } = string.Empty;
+    public string House { get; set; } = string.Empty;
+    public string Apartment { get; set; } = string.Empty;
+    public string Postal { get; set; } = string.Empty;
+    public string? Shop { get; set; }
+    public bool Blocked { get; set; }
+    public string Password { get; set; } = string.Empty;
+    public DateTime Registered { get; set; }
 
-    public string FirstName { get; }
+    public string FullName => $"{FirstName} {LastName}".Trim();
 
-    public string LastName { get; }
+    public string Initials =>
+        (FirstName.Length > 0 ? FirstName[..1] : "") + (LastName.Length > 0 ? LastName[..1] : "");
 
-    public string Email { get; }
-
-    public string Password { get; }
-
-    /// <summary>Роль на сайте: покупатель, продавец, модератор...</summary>
-    public string Role { get; }
-
-    /// <summary>Заблокированный пользователь не может войти.</summary>
-    public bool IsBlocked { get; }
-
-    public string FullName => $"{FirstName} {LastName}";
+    public User Clone() => (User)MemberwiseClone();
 }

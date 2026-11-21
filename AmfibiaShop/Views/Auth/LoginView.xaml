@@ -1,0 +1,40 @@
+﻿<UserControl x:Class="AmfibiaShop.Views.Auth.LoginView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel MaxWidth="400">
+        <TextBlock Text="ДОБРО ПОЖАЛОВАТЬ" Style="{StaticResource T.Eyebrow}"/>
+        <TextBlock Text="Вход в аккаунт" Style="{StaticResource T.H1}" FontSize="40" Margin="0,6,0,8"/>
+        <TextBlock Text="Войдите, чтобы покупать, следить за заказами и оставлять отзывы." Style="{StaticResource T.Muted}" Margin="0,0,0,28"/>
+
+        <TextBlock Text="Email" Style="{StaticResource T.Label}"/>
+        <TextBox x:Name="EmailTextBox" Tag="buyer@amfibia.by"/>
+
+        <TextBlock Text="Пароль" Style="{StaticResource T.Label}" Margin="0,16,0,6"/>
+        <PasswordBox x:Name="PassBox"/>
+
+        <Button x:Name="LoginButton" Content="Войти" Style="{StaticResource Btn.Primary}" IsDefault="True"
+                Margin="0,24,0,0" Click="LoginButton_Click"/>
+
+        <Border x:Name="ErrorPanel" Background="#22F0838F" BorderBrush="#55F0838F" BorderThickness="1" CornerRadius="2"
+                Padding="12,10" Margin="0,14,0,0" Visibility="Collapsed">
+            <TextBlock x:Name="MessageBlock" Foreground="{StaticResource Error}" TextWrapping="Wrap" FontSize="13"/>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+            <TextBlock Text="Нет аккаунта?" Style="{StaticResource T.Muted}" VerticalAlignment="Center"/>
+            <Button x:Name="RegisterLink" Content="Зарегистрироваться" Style="{StaticResource Btn.Link}" Margin="8,0,0,0"
+                    Click="RegisterLink_Click"/>
+        </StackPanel>
+
+        <Border Style="{StaticResource Divider}" Margin="0,28,0,18"/>
+        <TextBlock Text="Тестовые аккаунты сайта (пароль Amfibia2026)" Style="{StaticResource T.Label}"/>
+        <WrapPanel>
+            <Button Content="Покупатель · buyer@amfibia.by" Style="{StaticResource Btn.Ghost}" Padding="12,7" Margin="0,0,8,8"
+                    Tag="buyer@amfibia.by" Click="DemoButton_Click"/>
+            <Button Content="Анна · anna.kovaleva@example.com" Style="{StaticResource Btn.Ghost}" Padding="12,7" Margin="0,0,8,8"
+                    Tag="anna.kovaleva@example.com" Click="DemoButton_Click"/>
+            <Button Content="Заблокирован" Style="{StaticResource Btn.Ghost}" Padding="12,7" Margin="0,0,8,8"
+                    Tag="blocked.user@example.com" Click="DemoButton_Click"/>
+        </WrapPanel>
+    </StackPanel>
+</UserControl>

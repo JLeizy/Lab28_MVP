@@ -4,115 +4,245 @@ using System.Linq;
 
 namespace AmfibiaShop.Models;
 
+/// <summary>Строка корзины.</summary>
+public class CartLine
+{
+    public CartLine(Product product, string size, int quantity)
+    {
+        Product = product;
+        Size = size;
+        Quantity = quantity;
+    }
+
+    public Product Product { get; }
+
+    public string Size { get; }
+
+    public int Quantity { get; internal set; }
+
+    public decimal Total => Product.Price * Quantity;
+}
+
+/// <summary>Строка корзины для сохранения в файл.</summary>
+public class CartLineState
+{
+    public string Product { get; set; } = string.Empty;
+    public string Size { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+}
+
 /// <summary>
-/// МОДЕЛЬ корзины.
-/// Добавляет и удаляет товары, применяет промокод, считает суммы.
+/// МОДЕЛЬ корзины: товары, количество, промокод, способ доставки и суммы.
+/// Правила — как на сайте: бесплатная доставка от 3000 BYN, вещь с ресейла в одном экземпляре.
 /// </summary>
 public class CartModel
 {
-    /// <summary>Сколько штук одного товара одного размера можно положить в корзину.</summary>
     public const int MaxQuantity = 10;
 
-    private readonly List<CartItem> items = new List<CartItem>();
-
-    // Промокоды сайта (db/seed.js): код, скидка %, начало и конец действия
-    private readonly List<PromoCode> promoCodes = new List<PromoCode>
-    {
-        new PromoCode("AMFIBIA10", 10, new DateTime(2026, 1, 1), new DateTime(2026, 12, 31)),
-        new PromoCode("GOTHIC15", 15, new DateTime(2026, 5, 1), new DateTime(2026, 12, 31)),
-        new PromoCode("WELCOME20", 20, new DateTime(2026, 1, 1), null)
-    };
-
+    private readonly ShopData data;
+    private readonly List<CartLine> lines = new();
     private readonly DateTime? fixedToday;
 
-    /// <param name="today">Дата для проверки промокодов. Не указана — берётся сегодняшняя.</param>
-    public CartModel(DateTime? today = null)
+    /// <param name="today">Дата для проверки промокодов (для тестов). Не указана — сегодняшняя.</param>
+    public CartModel(ShopData data, DateTime? today = null)
     {
+        this.data = data;
         fixedToday = today;
+        Delivery = data.Delivery[0];
     }
 
-    public IReadOnlyList<CartItem> Items => items;
+    public event EventHandler? Changed;
 
-    /// <summary>Применённый промокод (null — нет).</summary>
-    public PromoCode? AppliedPromo { get; private set; }
-
-    /// <summary>Сообщение о результате последнего действия.</summary>
     public string Message { get; private set; } = string.Empty;
 
-    /// <summary>Сколько всего штук товаров в корзине.</summary>
-    public int Count => items.Sum(i => i.Quantity);
+    public IReadOnlyList<CartLine> Lines => lines;
 
-    /// <summary>Сумма без скидки.</summary>
-    public decimal Subtotal => items.Sum(i => i.Total);
+    public int Count => lines.Sum(l => l.Quantity);
 
-    /// <summary>Скидка по промокоду, округлённая до копеек.</summary>
+    public bool IsEmpty => lines.Count == 0;
+
+    public PromoCode? AppliedPromo { get; private set; }
+
+    public DeliveryMethod Delivery { get; private set; }
+
+    public decimal FreeDeliveryFrom => data.FreeDeliveryFrom;
+
+    public decimal Subtotal => lines.Sum(l => l.Total);
+
     public decimal Discount => AppliedPromo == null
         ? 0
         : Math.Round(Subtotal * AppliedPromo.Percent / 100m, 2, MidpointRounding.AwayFromZero);
 
-    /// <summary>Итого к оплате.</summary>
-    public decimal Total => Subtotal - Discount;
+    /// <summary>Сумма после скидки — от неё считается бесплатная доставка.</summary>
+    public decimal AfterDiscount => Subtotal - Discount;
 
-    private DateTime Today => fixedToday ?? DateTime.Today;
+    public bool FreeDelivery => AfterDiscount >= FreeDeliveryFrom;
 
-    public bool Add(Product product, string size)
+    public decimal LeftToFreeDelivery => Math.Max(0, FreeDeliveryFrom - AfterDiscount);
+
+    public decimal DeliveryPrice => IsEmpty || FreeDelivery ? 0 : Delivery.Price;
+
+    public decimal Total => AfterDiscount + DeliveryPrice;
+
+    private DateTime Today => (fixedToday ?? DateTime.Today).Date;
+
+    public bool Add(Product product, string size, int quantity = 1)
     {
-        // Вещь с ресейла существует в одном экземпляре
-        if (product.Preowned && items.Any(i => i.Product == product))
+        if (!product.Sizes.Contains(size))
         {
-            Message = "Эта вещь с ресейла есть в единственном экземпляре и уже лежит в корзине.";
+            Message = $"У товара нет размера {size}.";
             return false;
         }
 
-        CartItem? existing = items.FirstOrDefault(i => i.Product == product && i.Size == size);
-        if (existing != null)
+        if (quantity < 1)
         {
-            if (existing.Quantity >= MaxQuantity)
-            {
-                Message = $"Нельзя добавить больше {MaxQuantity} штук одного товара.";
-                return false;
-            }
-            existing.Quantity++;
+            Message = "Количество должно быть не меньше 1.";
+            return false;
+        }
+
+        if (product.Preowned && (quantity > 1 || lines.Any(l => l.Product == product)))
+        {
+            Message = "Вещь с ресейла есть в единственном экземпляре — больше одной положить нельзя.";
+            return false;
+        }
+
+        CartLine? line = lines.FirstOrDefault(l => l.Product == product && l.Size == size);
+        int newQuantity = (line?.Quantity ?? 0) + quantity;
+        if (newQuantity > MaxQuantity)
+        {
+            Message = $"Не больше {MaxQuantity} штук одного товара одного размера.";
+            return false;
+        }
+
+        if (line == null)
+        {
+            lines.Add(new CartLine(product, size, quantity));
         }
         else
         {
-            items.Add(new CartItem(product, size));
+            line.Quantity = newQuantity;
         }
 
         Message = $"Добавлено в корзину: {product.Name}, размер {size}.";
+        Changed?.Invoke(this, EventArgs.Empty);
         return true;
     }
 
-    public void Remove(CartItem item)
+    public bool ChangeQuantity(CartLine line, int delta)
     {
-        items.Remove(item);
-        Message = $"Удалено из корзины: {item.Product.Name}.";
+        int quantity = line.Quantity + delta;
+        if (quantity < 1)
+        {
+            Message = "Чтобы убрать товар, нажмите «Удалить».";
+            return false;
+        }
+
+        if (line.Product.Preowned && quantity > 1)
+        {
+            Message = "Вещь с ресейла есть в единственном экземпляре.";
+            return false;
+        }
+
+        if (quantity > MaxQuantity)
+        {
+            Message = $"Не больше {MaxQuantity} штук одного товара.";
+            return false;
+        }
+
+        line.Quantity = quantity;
+        Message = string.Empty;
+        Changed?.Invoke(this, EventArgs.Empty);
+        return true;
     }
 
-    public bool ApplyPromoCode(string code)
+    public void Remove(CartLine line)
     {
-        PromoCode? promo = promoCodes.FirstOrDefault(p => p.Code == code);
+        if (lines.Remove(line))
+        {
+            Message = $"Удалено из корзины: {line.Product.Name}.";
+            Changed?.Invoke(this, EventArgs.Empty);
+        }
+    }
 
-        if (promo == null)
+    public void Clear()
+    {
+        lines.Clear();
+        AppliedPromo = null;
+        Message = "Корзина очищена.";
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    public bool ApplyPromo(string code)
+    {
+        PromoCode? promo = data.Promos.FirstOrDefault(p => p.Code == code);
+
+        if (promo == null || !promo.Active)
         {
             Message = $"Промокода {code} не существует.";
             return false;
         }
 
-        if (Today < promo.ValidFrom)
+        if (Today < promo.ValidFrom.Date)
         {
             Message = $"Промокод {code} начнёт действовать {promo.ValidFrom:dd.MM.yyyy}.";
             return false;
         }
 
-        if (promo.ValidTo.HasValue && Today > promo.ValidTo.Value)
+        if (promo.ValidTo.HasValue && Today > promo.ValidTo.Value.Date)
         {
             Message = $"Срок действия промокода {code} закончился {promo.ValidTo.Value:dd.MM.yyyy}.";
             return false;
         }
 
-        AppliedPromo = promo; // обновление модели
+        AppliedPromo = promo;
         Message = $"Промокод {code} применён: скидка {promo.Percent}%.";
+        Changed?.Invoke(this, EventArgs.Empty);
         return true;
+    }
+
+    public void RemovePromo()
+    {
+        if (AppliedPromo != null)
+        {
+            AppliedPromo = null;
+            Message = "Промокод отменён.";
+            Changed?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public bool SelectDelivery(string code)
+    {
+        DeliveryMethod? method = data.FindDelivery(code);
+        if (method == null)
+        {
+            Message = "Неизвестный способ доставки.";
+            return false;
+        }
+
+        Delivery = method;
+        Message = string.Empty;
+        Changed?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
+    // ----- сохранение -----
+
+    public List<CartLineState> ToState() =>
+        lines.Select(l => new CartLineState { Product = l.Product.Id, Size = l.Size, Quantity = l.Quantity }).ToList();
+
+    public void Restore(IEnumerable<CartLineState>? state, string? promo, string? delivery)
+    {
+        lines.Clear();
+        foreach (CartLineState s in state ?? Enumerable.Empty<CartLineState>())
+        {
+            Product? product = data.FindProduct(s.Product);
+            if (product != null && product.Sizes.Contains(s.Size) && s.Quantity > 0)
+            {
+                lines.Add(new CartLine(product, s.Size, Math.Min(s.Quantity, product.Preowned ? 1 : MaxQuantity)));
+            }
+        }
+
+        AppliedPromo = data.Promos.FirstOrDefault(p => p.Code == promo);
+        Delivery = data.FindDelivery(delivery ?? string.Empty) ?? data.Delivery[0];
     }
 }
