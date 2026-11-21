@@ -49,13 +49,27 @@ public partial class MainWindow : Window, IShellView
 
     private void BackButton_Click(object sender, RoutedEventArgs e) => BackRequested?.Invoke(this, EventArgs.Empty);
 
-    private void SearchBox_KeyDown(object sender, KeyEventArgs e)
+    private void HeaderSearchBox_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter)
         {
-            SearchRequested?.Invoke(this, SearchBox.Text);
-            SearchBox.Text = string.Empty;
+            SearchRequested?.Invoke(this, HeaderSearchBox.Text);
+            HeaderSearchBox.Text = string.Empty;
         }
+    }
+
+    /// <summary>
+    /// Адаптивная шапка: на узком экране (например, ноутбук 1366×768) прячем подписи
+    /// у значков и имя пользователя — остаются значки со счётчиками и подсказками.
+    /// </summary>
+    private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        Visibility labels = ActualWidth >= 1560 ? Visibility.Visible : Visibility.Collapsed;
+        WishlistLabel.Visibility = labels;
+        CompareLabel.Visibility = labels;
+        CartLabel.Visibility = labels;
+        UserTextPanel.Visibility = ActualWidth >= 1440 ? Visibility.Visible : Visibility.Collapsed;
+        HeaderSearchBox.Width = ActualWidth >= 1440 ? 260 : 210;
     }
 
     private void CurrencyBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

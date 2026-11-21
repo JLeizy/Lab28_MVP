@@ -312,8 +312,8 @@
                         <Grid>
                             <TextBlock x:Name="Placeholder" Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Margin="{TemplateBinding Padding}"
                                        Foreground="{StaticResource Muted}" FontFamily="{TemplateBinding FontFamily}" FontSize="{TemplateBinding FontSize}"
-                                       IsHitTestVisible="False" Visibility="Collapsed" VerticalAlignment="Top" Padding="2,0,0,0"/>
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" Focusable="False"
+                                       IsHitTestVisible="False" Visibility="Collapsed" VerticalAlignment="Top" Padding="3,1,0,0"/>
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
                                           HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
                         </Grid>
                     </Border>
@@ -360,7 +360,7 @@
                 <ControlTemplate TargetType="PasswordBox">
                     <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="2">
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" Focusable="False"
+                        <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
                                       HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
                     </Border>
                     <ControlTemplate.Triggers>

@@ -6,7 +6,7 @@
         WindowStartupLocation="CenterScreen" WindowState="Maximized"
         Background="{StaticResource Bg}"
         FontFamily="{StaticResource FontBody}" Foreground="{StaticResource Text}"
-        Language="ru-RU">
+        Language="ru-RU" SizeChanged="Window_SizeChanged">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -33,35 +33,35 @@
 
                 <!-- Справа: поиск, валюта, счётчики, профиль -->
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,6">
-                    <TextBox x:Name="SearchBox" Width="250" Tag="Поиск: Triple S, Prada, кольцо…" KeyDown="SearchBox_KeyDown"
+                    <TextBox x:Name="HeaderSearchBox" Width="230" Tag="Поиск: Triple S, Prada, кольцо…" KeyDown="HeaderSearchBox_KeyDown"
                              VerticalAlignment="Center" Padding="12,8"/>
                     <ComboBox x:Name="CurrencyBox" Width="96" Margin="12,0,18,0" SelectionChanged="CurrencyBox_SelectionChanged"
                               ToolTip="Валюта цен" Padding="12,8,30,8"/>
 
-                    <RadioButton x:Name="NavWishlist" GroupName="Nav" Style="{StaticResource NavTab}" Tag="wishlist" Checked="Nav_Checked" Margin="0,0,20,0">
+                    <RadioButton x:Name="NavWishlist" GroupName="Nav" Style="{StaticResource NavTab}" Tag="wishlist" ToolTip="Избранное" Checked="Nav_Checked" Margin="0,0,20,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="♡" FontFamily="Segoe UI Symbol" FontSize="17" VerticalAlignment="Center"/>
-                            <TextBlock Text="Избранное" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="WishlistLabel" Text="Избранное" Margin="6,0,0,0" VerticalAlignment="Center"/>
                             <Border x:Name="WishlistBadge" Style="{StaticResource CounterBadge}" Visibility="Collapsed">
                                 <TextBlock x:Name="WishlistCount" FontSize="11" FontFamily="{StaticResource FontSemi}" Foreground="{StaticResource Bg}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </StackPanel>
                     </RadioButton>
-                    <RadioButton x:Name="NavCompare" GroupName="Nav" Style="{StaticResource NavTab}" Tag="compare" Checked="Nav_Checked" Margin="0,0,20,0">
+                    <RadioButton x:Name="NavCompare" GroupName="Nav" Style="{StaticResource NavTab}" Tag="compare" ToolTip="Сравнение" Checked="Nav_Checked" Margin="0,0,20,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="⇄" FontFamily="Segoe UI Symbol" FontSize="16" VerticalAlignment="Center"/>
-                            <TextBlock Text="Сравнение" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="CompareLabel" Text="Сравнение" Margin="6,0,0,0" VerticalAlignment="Center"/>
                             <Border x:Name="CompareBadge" Style="{StaticResource CounterBadge}" Visibility="Collapsed">
                                 <TextBlock x:Name="CompareCount" FontSize="11" FontFamily="{StaticResource FontSemi}" Foreground="{StaticResource Bg}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </StackPanel>
                     </RadioButton>
-                    <RadioButton x:Name="NavCart" GroupName="Nav" Style="{StaticResource NavTab}" Tag="cart" Checked="Nav_Checked" Margin="0,0,22,0">
+                    <RadioButton x:Name="NavCart" GroupName="Nav" Style="{StaticResource NavTab}" Tag="cart" ToolTip="Корзина" Checked="Nav_Checked" Margin="0,0,22,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="🛍" FontFamily="Segoe UI Emoji" FontSize="15" VerticalAlignment="Center"/>
-                            <TextBlock Text="Корзина" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="CartLabel" Text="Корзина" Margin="6,0,0,0" VerticalAlignment="Center"/>
                             <Border x:Name="CartBadge" Style="{StaticResource CounterBadge}" Visibility="Collapsed">
                                 <TextBlock x:Name="CartCount" FontSize="11" FontFamily="{StaticResource FontSemi}" Foreground="{StaticResource Bg}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -85,7 +85,7 @@
                                 <TextBlock x:Name="InitialsText" FontFamily="{StaticResource FontDisplayBold}" FontSize="17"
                                            Foreground="{StaticResource Text}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                            <StackPanel x:Name="UserTextPanel" Margin="10,0,0,0" VerticalAlignment="Center">
                                 <TextBlock x:Name="UserNameText" FontFamily="{StaticResource FontMedium}" FontSize="13" Foreground="{StaticResource Text}"/>
                                 <TextBlock x:Name="UserRoleText" FontSize="11" Foreground="{StaticResource Muted}"/>
                             </StackPanel>

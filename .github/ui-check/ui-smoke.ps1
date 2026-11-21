@@ -133,11 +133,13 @@ try {
 
     # ===================== КАТАЛОГ =====================
     SelectItem (El $main 'NavCatalog')
-    $page = El $main 'PageHost'
+    $page = $main
     Check 'Каталог: 714 вещей' ((TextOf $page 'CountText') -eq 'Найдено 714 вещей') (TextOf $page 'CountText')
     Shot '05-catalog'
     $groups = El $page 'GroupList'
-    ClickEl (ByName $groups 'Ювелирные изделия')
+    $groupItems = $groups.FindAll($TS::Children, (Cond $AE::ControlTypeProperty $CT::ListItem))
+    Write-Host "     пунктов в списке разделов: $($groupItems.Count)"
+    SelectItem $groupItems[5]
     Check 'Раздел «Ювелирные изделия»' ((TextOf $page 'CountText') -eq 'Найдено 85 вещей') (TextOf $page 'CountText')
     Toggle (El $page 'OnlyPreownedBox')
     Start-Sleep -Milliseconds 500
@@ -150,7 +152,7 @@ try {
 
     # ===================== ТОВАР =====================
     ClickEl (ByName $page 'Кроссовки Triple S')
-    $page = El $main 'PageHost'
+    $page = $main
     Check 'Страница товара открыта' ((ByName $page 'Кроссовки Triple S') -ne $null)
     Press (El $page 'AddToCartButton')
     Check 'Без размера нельзя' ((TextOf $page 'MessageText') -eq 'Выберите размер.') (TextOf $page 'MessageText')
@@ -166,21 +168,21 @@ try {
     Shot '07-product'
 
     Press (ByName $page 'Balenciaga')
-    $page = El $main 'PageHost'
+    $page = $main
     Check 'Страница бренда Balenciaga' ((ByName $page 'Креативные директора') -ne $null)
     Start-Sleep -Milliseconds 600
     Shot '08-brand-balenciaga'
 
     # ===================== КОРЗИНА И ОФОРМЛЕНИЕ =====================
     SelectItem (El $main 'NavCart')
-    $page = El $main 'PageHost'
+    $page = $main
     SetValue (El $page 'PromoBox') 'amfibia10'
     Press (El $page 'ApplyPromoButton')
     Check 'Промокод применён' ((TextOf $page 'PromoAppliedText') -eq 'Промокод AMFIBIA10 · −10%') (TextOf $page 'PromoAppliedText')
     Write-Host "     итог корзины: $(TextOf $page 'TotalText')"
     Shot '09-cart'
     Press (El $page 'CheckoutButton')
-    $page = El $main 'PageHost'
+    $page = $main
     Shot '10-checkout-1'
     Press (El $page 'NextButton')
     Shot '11-checkout-2'
@@ -201,13 +203,13 @@ try {
 
     # ===================== ЗАКАЗЫ =====================
     Press (El $page 'OrdersButton')
-    $page = El $main 'PageHost'
+    $page = $main
     Check 'Мои заказы' ((TextOf $page 'CountText') -match 'заказ') (TextOf $page 'CountText')
     Shot '15-orders'
 
     # ===================== ОСТАЛЬНЫЕ СТРАНИЦЫ =====================
     SelectItem (El $main 'NavBrands')
-    $page = El $main 'PageHost'
+    $page = $main
     Check 'Модные дома' ((TextOf $page 'CountText').StartsWith('15 модных домов')) (TextOf $page 'CountText')
     Shot '16-brands'
     SelectItem (El $main 'NavWishlist')
@@ -215,7 +217,7 @@ try {
     SelectItem (El $main 'NavCompare')
     Shot '18-compare'
     SelectItem (El $main 'NavProfile')
-    $page = El $main 'PageHost'
+    $page = $main
     Check 'Профиль' ((TextOf $page 'EmailText') -eq 'buyer@amfibia.by') (TextOf $page 'EmailText')
     Shot '19-profile'
 
