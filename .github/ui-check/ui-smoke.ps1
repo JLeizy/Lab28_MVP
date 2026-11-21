@@ -127,7 +127,7 @@ try {
     $main = WaitWindow 'AMFIBIA — маркетплейс брендовой одежды'
     Start-Sleep -Seconds 2
     Check 'Окно входа закрылось' (-not (FindWindow 'AMFIBIA — вход'))
-    Check 'Пользователь в шапке' ((TextOf $main 'UserNameText') -eq 'Ева Лисовская') (TextOf $main 'UserNameText')
+    Check 'Инициалы пользователя в шапке' ((TextOf $main 'InitialsText') -eq 'ЕЛ') (TextOf $main 'InitialsText')
     Check 'Заголовок главной' ((TextOf $main 'HeroTitle').StartsWith('Ева, добро пожаловать')) (TextOf $main 'HeroTitle')
     Shot '04-home'
 
