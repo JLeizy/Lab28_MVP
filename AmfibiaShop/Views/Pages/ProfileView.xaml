@@ -33,7 +33,7 @@
                             <DataTemplate>
                                 <Border Background="{StaticResource Surface2}" CornerRadius="3" Margin="4" Padding="12,12">
                                     <StackPanel>
-                                        <TextBlock Text="{Binding Label}" FontFamily="{StaticResource FontDisplayBold}" FontSize="24" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding Label}" FontFamily="{StaticResource FontDisplayBold}" FontSize="20" TextWrapping="Wrap"/>
                                         <TextBlock Text="{Binding Value}" Style="{StaticResource T.Muted}" FontSize="12"/>
                                     </StackPanel>
                                 </Border>
