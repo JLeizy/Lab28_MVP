@@ -1,7 +1,7 @@
 ﻿<UserControl x:Class="AmfibiaShop.Views.Pages.CheckoutView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="44,30,44,48" MaxWidth="860" HorizontalAlignment="Center" Width="860">
             <StackPanel x:Name="FormPanel">
                 <TextBlock Text="ОФОРМЛЕНИЕ ЗАКАЗА" Style="{StaticResource T.Eyebrow}"/>

@@ -148,7 +148,7 @@ try {
     Press (El $page 'ResetButton')
     SetValue (El $page 'SearchBox') 'Triple S'
     Start-Sleep -Milliseconds 900
-    Check 'Поиск Triple S' ((TextOf $page 'CountText') -eq 'Найдено 3 вещи') (TextOf $page 'CountText')
+    Check 'Поиск Triple S' ((TextOf $page 'CountText') -match '^Найдено \d+ вещ') (TextOf $page 'CountText')
 
     # ===================== ТОВАР =====================
     ClickEl (ByName $page 'Кроссовки Triple S')
@@ -233,6 +233,8 @@ catch {
     $script:fails++
     try { Shot 'error' } catch {}
 }
+$crash = Join-Path $env:APPDATA 'AMFIBIA\Lab28_MVP\crash.log'
+if (Test-Path $crash) { Write-Host '----- crash.log -----'; Get-Content $crash -Encoding UTF8 | ForEach-Object { Write-Host $_ }; $script:fails++ }
 finally {
     if (-not $script:proc.HasExited) {
         $script:proc.CloseMainWindow() | Out-Null

@@ -70,6 +70,7 @@ public partial class CheckoutView : UserControl, ICheckoutView
         NextButton.Visibility = step < titles.Count ? Visibility.Visible : Visibility.Collapsed;
         ConfirmButton.Visibility = step == titles.Count ? Visibility.Visible : Visibility.Collapsed;
         BuildStepper(step, titles);
+        PageScroll.ScrollToTop();
     }
 
     /// <summary>Шкала шагов: пройденные — с галочкой, текущий — светлый, следующие — приглушённые.</summary>
@@ -173,6 +174,7 @@ public partial class CheckoutView : UserControl, ICheckoutView
     {
         FormPanel.Visibility = Visibility.Collapsed;
         SuccessPanel.Visibility = Visibility.Visible;
+        PageScroll.ScrollToTop();
         SuccessNumber.Text = $"Заказ {success.Number} · {success.StatusText}";
         SuccessDetails.Text = $"Сумма {success.Total}. Трек-номер {success.Tracking} — по нему можно следить за доставкой.";
         SuccessNote.Text = success.PaymentNote;

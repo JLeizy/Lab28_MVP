@@ -1,4 +1,7 @@
-﻿using System.Windows;
+﻿using System;
+using System.IO;
+using System.Windows;
+using System.Windows.Threading;
 using AmfibiaShop.Models;
 using AmfibiaShop.Presenters;
 using AmfibiaShop.Views;
@@ -17,10 +20,38 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // Любая непредвиденная ошибка записывается в crash.log, программа не закрывается
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += (_, args) => LogCrash(args.ExceptionObject as Exception);
+
         // МОДЕЛИ: данные сайта AMFIBIA + личные данные в %AppData%\AMFIBIA\Lab28_MVP
         shop = new ShopContext(ShopData.LoadEmbedded(), Storage.CreateDefault());
 
         ShowAuth();
+    }
+
+    private static string CrashLogPath =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "AMFIBIA", "Lab28_MVP", "crash.log");
+
+    private static void LogCrash(Exception? error)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(CrashLogPath)!);
+            File.AppendAllText(CrashLogPath, $"[{DateTime.Now:dd.MM.yyyy HH:mm:ss}] {error}{Environment.NewLine}{Environment.NewLine}");
+        }
+        catch (IOException)
+        {
+            // записать не удалось — ничего страшного
+        }
+    }
+
+    private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        LogCrash(e.Exception);
+        e.Handled = true;
+        MessageBox.Show($"Произошла ошибка: {e.Exception.Message}\n\nПодробности записаны в {CrashLogPath}",
+                        "AMFIBIA", MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 
     /// <summary>Окно входа: два Вида (вход и регистрация) и два Представителя с общей моделью AuthModel.</summary>
