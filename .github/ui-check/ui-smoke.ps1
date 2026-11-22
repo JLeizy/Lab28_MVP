@@ -233,8 +233,6 @@ catch {
     $script:fails++
     try { Shot 'error' } catch {}
 }
-$crash = Join-Path $env:APPDATA 'AMFIBIA\Lab28_MVP\crash.log'
-if (Test-Path $crash) { Write-Host '----- crash.log -----'; Get-Content $crash -Encoding UTF8 | ForEach-Object { Write-Host $_ }; $script:fails++ }
 finally {
     if (-not $script:proc.HasExited) {
         $script:proc.CloseMainWindow() | Out-Null
@@ -242,5 +240,7 @@ finally {
         if (-not $script:proc.HasExited) { $script:proc.Kill() }
     }
 }
+$crash = Join-Path $env:APPDATA 'AMFIBIA\Lab28_MVP\crash.log'
+if (Test-Path $crash) { Write-Host '----- crash.log -----'; Get-Content $crash -Encoding UTF8 | ForEach-Object { Write-Host $_ }; $script:fails++ }
 if ($script:fails -gt 0) { Write-Host "ПРОВАЛЕНО: $($script:fails)"; exit 1 }
 Write-Host 'ВСЕ ПРОВЕРКИ ОКОН ПРОЙДЕНЫ'

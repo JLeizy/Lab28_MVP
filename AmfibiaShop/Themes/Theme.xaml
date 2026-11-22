@@ -865,7 +865,7 @@
     <Style x:Key="StatusPill" TargetType="Border">
         <Setter Property="CornerRadius" Value="11"/>
         <Setter Property="Padding" Value="10,3"/>
-        <Setter Property="Background" Value="#262C7FC79B"/>
+        <Setter Property="Background" Value="#267FC79B"/>
         <Setter Property="HorizontalAlignment" Value="Left"/>
         <Style.Triggers>
             <DataTrigger Binding="{Binding StatusKind}" Value="active">
